@@ -1,0 +1,50 @@
+function compareAndMoveData() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = spreadsheet.getSheets();
+
+  var newDataSheet = spreadsheet.getSheetByName('NewData'); // توجيه الورقة الجديدة
+  if (newDataSheet == null) {
+    newDataSheet = spreadsheet.insertSheet('NewData');
+  }
+
+  var emailCount = {}; // كائن لتتبع عدد مرات ظهور البريد الإلكتروني
+  var minAttendanceRequired = 3; // الحد الأدنى للحضور المطلوب
+
+  // المرور على جميع الأوراق وفحص البريد الإلكتروني وعدد الحضور
+  for (var i = 0; i < sheets.length; i++) {
+    var sheet = sheets[i];
+    var data = sheet.getDataRange().getValues();
+    
+    for (var row = 1; row < data.length; row++) {
+      var email = data[row][1]; // افتراض أن البريد الإلكتروني في العمود 2 (قد تحتاج إلى تغييره)
+      if (emailCount[email]) {
+        emailCount[email]++;
+      } else {
+        emailCount[email] = 1;
+      }
+    }
+  }
+
+  // المرور مرة أخرى لنقل البيانات للورقة الجديدة إذا تم تحقيق الشرط ولا تكرار
+  for (var i = 0; i < sheets.length; i++) {
+    var sheet = sheets[i];
+    var data = sheet.getDataRange().getValues();
+    
+    for (var row = 0; row < data.length; row++) {
+      var email = data[row][1]; // افتراض أن البريد الإلكتروني في العمود 2 (قد تحتاج إلى تغييره)
+      if (emailCount[email] >= minAttendanceRequired && !isEmailAlreadyMoved(email, newDataSheet)) {
+        newDataSheet.appendRow(data[row]);
+      }
+    }
+  }
+}
+
+function isEmailAlreadyMoved(email, sheet) {
+  var data = sheet.getDataRange().getValues();
+  for (var row = 0; row < data.length; row++) {
+    if (data[row][1] == email) {
+      return true;
+    }
+  }
+  return false;
+}
