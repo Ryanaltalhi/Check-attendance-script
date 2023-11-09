@@ -1,22 +1,24 @@
+
 function compareAndMoveData() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheets = spreadsheet.getSheets();
 
-  var newDataSheet = spreadsheet.getSheetByName('NewData'); // توجيه الورقة الجديدة
+  var newDataSheet = spreadsheet.getSheetByName('NewData'); // new sheet
   if (newDataSheet == null) {
     newDataSheet = spreadsheet.insertSheet('NewData');
   }
 
-  var emailCount = {}; // كائن لتتبع عدد مرات ظهور البريد الإلكتروني
-  var minAttendanceRequired = 3; // الحد الأدنى للحضور المطلوب
+  var emailCount = {}; // An object to track the number of email impressions
+  var minAttendanceRequired = 3; // Minimum attendance required
+  var movedEmails = []; // An array to track which email has been transferred
 
-  // المرور على جميع الأوراق وفحص البريد الإلكتروني وعدد الحضور
+ // Go through all the sheets and check the email and the number of attendees
   for (var i = 0; i < sheets.length; i++) {
     var sheet = sheets[i];
     var data = sheet.getDataRange().getValues();
-    
+
     for (var row = 1; row < data.length; row++) {
-      var email = data[row][1]; // افتراض أن البريد الإلكتروني في العمود 2 (قد تحتاج إلى تغييره)
+      var email = data[row][3]; // Assuming email is in column 2 (you may need to change it)
       if (emailCount[email]) {
         emailCount[email]++;
       } else {
@@ -25,26 +27,23 @@ function compareAndMoveData() {
     }
   }
 
-  // المرور مرة أخرى لنقل البيانات للورقة الجديدة إذا تم تحقيق الشرط ولا تكرار
+  // Pass again to transfer the data to the new sheet if the condition is met and there is no repetition
   for (var i = 0; i < sheets.length; i++) {
     var sheet = sheets[i];
     var data = sheet.getDataRange().getValues();
-    
+
     for (var row = 0; row < data.length; row++) {
-      var email = data[row][1]; // افتراض أن البريد الإلكتروني في العمود 2 (قد تحتاج إلى تغييره)
-      if (emailCount[email] >= minAttendanceRequired && !isEmailAlreadyMoved(email, newDataSheet)) {
+      var email = data[row][3]; // Assuming email is in column 2 (you may need to change it)
+      if (emailCount[email] >= minAttendanceRequired && !movedEmails.includes(email)) {
         newDataSheet.appendRow(data[row]);
+        movedEmails.push(email);
       }
     }
   }
 }
 
-function isEmailAlreadyMoved(email, sheet) {
-  var data = sheet.getDataRange().getValues();
-  for (var row = 0; row < data.length; row++) {
-    if (data[row][1] == email) {
-      return true;
-    }
-  }
-  return false;
+// Function to check if the email has already been transferred
+
+function isEmailAlreadyMoved(email, movedEmails) {
+  return movedEmails.includes(email);
 }
